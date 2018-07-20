@@ -1,0 +1,567 @@
+##_________Landscape Model (Watershed)_______##
+
+globals [raster elev forest threshold]
+extensions [gis]
+patches-own[lu slope floss a_c na_c a_s na_s a_w na_w a_m na_m a_b na_b a_f na_f]
+
+to setup
+  ca
+  load-i
+  reset-ticks
+  set elev gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\slope.asc"
+  gis:apply-raster elev slope
+  gis:set-world-envelope (gis:envelope-of raster)
+  set forest gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\floss.asc"
+  gis:apply-raster forest floss
+  gis:set-world-envelope (gis:envelope-of raster)
+
+end
+
+to load-i
+  set raster gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\lulc1993.asc"
+  gis:set-world-envelope (gis:envelope-of raster)
+  gis:apply-raster raster lu
+  ask patches with [lu = 1] [set pcolor 105] ;WATER
+  ask patches with [lu = 2] [set pcolor 126] ;MANGROVE
+  ask patches with [lu = 3] [set pcolor 45] ;CULTIVATED
+  ask patches with [lu = 4] [set pcolor 15] ;BUILT ;;use ask patch-at 1 0 #this goes to the east of the patch
+  ask patches with [lu = 5] [set pcolor 56] ;SHRUBLAND
+  ask patches with [lu = 6] [set pcolor 62] ;FOREST
+end
+
+;neighbors - 8 surrounding pathes
+;neighbors4 - 4 surrounding patches
+;neighbors6 - 6 surrounding patches
+
+
+to go ;revision
+  set threshold 0.50
+  ;CULTIVATED
+  ask patches with [lu = 3] [set a_c 0.4779] ;CULTIVATED
+  ask patches [set na_c ((a_c + sum [a_c] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 3] [ set a_c na_c
+    if a_c < threshold * cultivated_t and slope_factor <= slope;or floss >= 1
+    [set pcolor [pcolor] of one-of neighbors]]
+  ;SHRUBLAND
+  ask patches with [lu = 5] [set a_s 0.7439] ;SHRUBLAND
+  ask patches [set na_s ((a_s + sum [a_s] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 5] [ set a_s na_s
+    if a_s < threshold + cultivated_t ;and slope >= 18
+    [set pcolor [pcolor] of one-of neighbors]]
+  ;WATER
+  ask patches with [lu = 1] [set a_w 0.5483] ;WATER
+  ask patches [set na_w ((a_w + sum [a_w] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 1] [ set a_w na_w
+    if a_w < threshold ;and slope >= 18
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ;MANGROVE
+  ask patches with [lu = 2] [set a_m 0.7373] ;Mangrove
+  ask patches [set na_m ((a_m + sum [a_m] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 2] [ set a_m na_m
+    if a_m < threshold + floodplain_dev ;and slope >= 18
+    [set pcolor [pcolor] of one-of neighbors]]
+  ;BUILT-UP
+  ask patches with [lu = 4] [set a_b 1.000] ;BUILT
+  ask patches [set na_b ((a_b + sum [a_b] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 4] [ set a_b na_b
+    if a_b = threshold
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ;FOREST
+  ask patches with [lu = 6] [set a_f 0.4732] ;FOREST
+  ask patches [set na_f ((a_f + sum [a_f] of neighbors) / 9)] ;vonn neuman
+  ask patches with [lu = 6] [ set a_f na_f
+    if a_f < threshold ;and slope >= 18
+    [set pcolor [pcolor] of one-of neighbors]]
+
+  tick
+  if ticks = 100 [stop]
+end
+
+to cultivated
+  ;CULTIVATED
+  ask patches with [lu = 1] [set a_w 0.0005] ;WATER
+  ask patches with [lu = 2] [set a_m 0.0124] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.4779] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 0.0117] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.4637] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.0337] ;FOREST
+
+  ask patches with [lu = 3] [set na_c ((mean [a_c] of neighbors + a_c) / 2)
+   if a_c <= na_c
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to water
+     ;WATER
+  ask patches with [lu = 1] [set a_w 0.5483] ;WATER
+  ask patches with [lu = 2] [set a_m 0.1408] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.2311] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 0.0080] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.0000] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.0798] ;FOREST
+
+  ask patches with [lu = 1] [set na_w ((a_w + sum [a_w] of neighbors) / 9)
+   if na_w <= a_w
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to mangrove
+    ;MANGROVE
+  ask patches with [lu = 1] [set a_w 0.0008] ;WATER
+  ask patches with [lu = 2] [set a_m 0.7373] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.1691] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 0.0000] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.0036] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.0891] ;FOREST
+
+  ask patches with [lu = 2] [set na_m ((a_m + sum [a_m] of neighbors) / 9)
+   if na_m <= a_m
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to built
+  ;BUILT
+  ask patches with [lu = 1] [set a_w 0.0000] ;WATER
+  ask patches with [lu = 2] [set a_m 0.0000] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.0000] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 1.0000] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.0000] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.0000] ;FOREST
+
+  ask patches with [lu = 4] [set na_b ((a_b + sum [a_b] of neighbors) / 9)
+   if na_b >= a_b
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to shrubland
+  ;SHRUBLAND
+  ask patches with [lu = 1] [set a_w 0.0000] ;WATER
+  ask patches with [lu = 2] [set a_m 0.0016] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.1548] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 0.0080] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.7439] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.0917] ;FOREST
+
+  ask patches with [lu = 5] [set na_s ((a_s + sum [a_s] of neighbors) / 9)
+   if na_s <= a_s
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to forests
+  ;FOREST
+  ask patches with [lu = 1] [set a_w 0.0000] ;WATER
+  ask patches with [lu = 2] [set a_m 0.0475] ;Mangrove
+  ask patches with [lu = 3] [set a_c 0.0682] ;CULTIVATED
+  ask patches with [lu = 4] [set a_b 0.0005] ;BUILT
+  ask patches with [lu = 5] [set a_s 0.4115] ;SHRUBLAND
+  ask patches with [lu = 6] [set a_f 0.4732] ;FOREST
+
+  ask patches with [lu = 6] [set na_f ((a_f + sum [a_f] of neighbors) / 9)
+   if na_f <= a_f
+  [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+
+to go_all
+  forests
+  built
+  shrubland
+  cultivated
+  mangrove
+  water
+end
+
+##______Growth Model FON__________##
+
+globals [
+  ;; This list contains the numbers of the FON that are on,
+  ;; for example, if all six FON are on, the list will be
+  ;; [1 2 3 4 5 6].  The list is only built during SETUP and
+  ;; READ-FON.
+  FON
+  ;; This is a list of cells which are eligible to become alive.
+  eligibles
+]
+
+;; About the use of lists in this model:
+;;
+;; The model could be coded more simply without the "FON" and
+;; "eligibles" lists.  But using those lists enables the model to run
+;; much faster.
+;;
+;; The "FON" list is used so a cell can quickly check its live
+;; neighbors count against the six FON without having to actually
+;; inspect the FON one by one.  If the user flips a switch,
+;; the list will be out of date, which is why we ask the user to
+;; press the SETUP or READ-FON buttons after changing FON.
+;;
+;; The "eligibles" list is used so that when we are trying to decide
+;; what cell will become alive next, we don't have to check every
+;; cell.  The list contains only those cells we know are eligible.
+;; Every time a cell becomes alive, we remove it from the list.
+;; We must also check that cell's neighbors to see if they need
+;; to be added or removed from the list.
+
+breed [cells cell]
+
+cells-own [
+  hex-neighbors
+  live-neighbor-count
+  eligible?
+]
+
+to setup
+  clear-all
+  setup-grid
+  read-FON
+  ;; start with one live cell in the middle
+  ask n-of density cells [become-alive]
+  reset-ticks
+end
+
+to go
+  random-seed 47822
+  if empty? eligibles [ stop ]
+  ask one-of eligibles [ become-alive ]
+  if ticks = 100000 [stop]
+  tick
+end
+
+to become-alive  ;; cell procedure
+  show-turtle
+  set eligible? false
+  set eligibles remove self eligibles
+  ask hex-neighbors [
+    set live-neighbor-count live-neighbor-count + 1
+    if live-neighbor-count = 6 [ set color green ] set size random one-of [0.5 1.5 3 4.5 6] ;to set random dbh
+    ;if live-neighbor-count = 6 [ set color green ] set size dbh ;to set based on diameter slider
+    update-eligibility
+  ]
+end
+
+to update-eligibility  ;; cell procedure
+  ifelse eligible?
+  ;; case 1: currently eligible
+  [
+    if not member? live-neighbor-count FON [
+      set eligible? false
+      set eligibles remove self eligibles
+    ]
+  ]
+  ;; case 2: not currently eligible
+  [
+    ;; the check for hidden? ensures the cell isn't already alive
+    if hidden? and member? live-neighbor-count FON [
+      set eligible? true
+      ;; The order of the list doesn't matter, but in NetLogo
+      ;; (as in Logo and Lisp generally), FPUT is much much
+      ;; faster than LPUT.
+      set eligibles fput self eligibles
+    ]
+  ]
+end
+
+;;; only allow the new alive cells to have number of neighbors as allowed by the FON
+to read-FON
+  set FON []
+  if one-neighbor?    [ set FON lput 1 FON ]
+  ;if two-neighbors?   [ set FON lput 2 FON ]
+  ;if three-neighbors? [ set FON lput 3 FON ]
+  if four-neighbors?  [ set FON lput 4 FON ]
+  ;if five-neighbors?  [ set FON lput 5 FON ]
+  ;if six-neighbors?   [ set FON lput 6 FON ]
+  if eight-neighbors? [ set FON lput 8 FON ]
+  ;if twelve-neighbors? [ set FON lput 12 FON ]
+  if sixteen-neighbors? [ set FON lput 16 FON ]
+  if twentyfive-neighbors? [ set FON lput 25 FON ]
+  ;if thirtysix-neighbors? [ set FON lput 36 FON ]
+  ask cells [
+    set eligible? hidden? and member? live-neighbor-count FON
+  ]
+  set eligibles [self] of cells with [eligible?]
+end
+
+;;; this was mostly taken from Hex Cells Example
+to setup-grid
+  set-default-shape turtles "circle"
+  ask patches [
+    sprout-cells 1 [
+      hide-turtle
+      set color 0
+      set eligible? true ;default to false
+      if pxcor mod 2 = 0 [
+        set ycor ycor - 0.5
+      ]
+    ]
+  ]
+
+  ask cells [
+    ifelse pxcor mod 2 = 0 [
+      set hex-neighbors cells-on patches at-points [[-1 -1] [0 -1] [1 -1]
+                                                    [-1 0] [0 0] [1 0]
+                                                    [-1 1] [0 1] [1 1]]
+    ][
+      set hex-neighbors cells-on patches at-points [[-1 -1] [0 -1] [1 -1]
+                                                    [-1 0] [0 0] [1 0]
+                                                    [-1 1] [0 1] [1 1]]
+    ]
+  ]
+end
+
+; Adapted and modified from Uri Wilensky (Copyright 2007)
+; See Info tab for full copyright and license.
+
+##_______________Mangrove Species Grouping Model (Mortality/Growth) __________##
+extensions [gis]
+globals [
+  th
+  raster
+  sp
+  raster0
+  raster1
+  raster2
+  raster3
+  raster4
+  raster5
+  threshold
+]
+patches-own [
+  alive
+  dead
+  grow
+  mg
+  core
+  road
+  stream
+  built
+  suit
+  all
+  a_s
+  a_r
+  na_s
+  na_r
+  a_l
+  na_l
+  a_m
+  na_m
+  suitability
+]
+
+to setup
+  ca
+  load-sp
+  load-data
+  reset-ticks
+end
+
+to load-sp
+  set sp gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\species.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster sp mg
+  ask patches with [mg = 1] [set pcolor 124] ;Landward
+  ask patches with [mg = 2] [set pcolor 46] ; Midward
+  ask patches with [mg = 3] [set pcolor 63] ;Seaward
+  ask patches with [mg = 0] [set pcolor 0] ; No data
+end
+
+to load_orig
+  set raster4 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\mg_suit.asc"
+  gis:set-world-envelope gis:envelope-of raster4
+  gis:apply-raster raster4 suit
+  ask patches with [suit = 1] [set grow 1 set pcolor green]
+  ask patches with [suit = 0] [set grow 0 set pcolor black]
+end
+
+to load-data
+  set raster0 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\core.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster0 core
+  set raster1 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\road.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster1 road
+  set raster2 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\built.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster2 built
+  set raster3 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\streams.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster3 stream
+  set raster4 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\mg_suit.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster4 suit
+  ask patches with [suit = 1] [set suitability 1]
+  ask patches with [suit = 0] [set suitability 0]
+  set raster5 gis:load-dataset "C:\\Users\\Michael\\Documents\\data\\lu\\all.asc"
+  gis:set-world-envelope gis:envelope-of sp
+  gis:apply-raster raster5 all
+end
+
+to death
+road_i
+core_i
+stream_i
+built_i
+;preference
+;if ticks = 24 [stop]
+end
+
+to growth
+  grow_l
+end
+
+to grow_l
+  ask patches with [mg = 1] [set a_l 0.333] ;CULTIVATED
+  ask patches [set na_l ((a_l + sum [a_l] of neighbors) / 9)] ;vonn neuman
+  ask patches with [mg = 1] [ set na_l a_l
+    if suitability = 1
+    [set pcolor [pcolor] of one-of neighbors]]
+
+  ask patches with [mg = 2] [set a_m 0.333] ;CULTIVATED
+  ask patches [set na_m ((a_m + sum [a_m] of neighbors) / 8)] ;vonn neuman
+  ask patches with [mg = 2] [ set na_m a_m
+    if suitability = 1
+    [set pcolor [pcolor] of one-of neighbors]]
+
+  ask patches with [mg = 3] [set a_s 0.333] ;CULTIVATED
+  ask patches [set na_s ((a_s + sum [a_s] of neighbors) / 8)] ;vonn neuman
+  ask patches with [mg = 3] [ set na_s a_s
+    if suitability = 1
+    [set pcolor [pcolor] of one-of neighbors]]
+  tick
+end
+to setup2
+  ca
+  ;load-sp
+  load_orig
+  reset-ticks
+end
+
+
+to grow2
+ load_orig
+ set th 1 ;neighborhood treshold
+ ask patches [
+   set grow count neighbors with [pcolor = green]]
+   ask patches[
+     if grow >= th
+     ;[set pcolor [pcolor] of one-of neighbors4]] ;OK
+     [set pcolor [pcolor] of one-of patches in-radius 4]]
+     ;[set pcolor (patches in-radius 8 with [ pcolor = green])]]
+ tick
+ if ticks = year [stop]
+end
+
+to road_i
+   let t 1
+  ask patches with [mg = 1] [ set a_s 0 set na_s 0]
+  ask patches with [mg = 1]
+  [ set a_s na_s
+    if a_s = t or road <= road_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 2] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 2] [ set a_r na_r
+    if a_s = t or road <= road_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 3] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 3] [ set a_r na_r
+    if a_s = t or road <= road_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  tick
+  if ticks = 100 [stop]
+end
+
+to core_i
+   let t 1
+  ask patches with [mg = 1] [ set a_s 0 set na_s 0]
+  ask patches with [mg = 1]
+  [ set a_s na_s
+    if a_s = t or core <= core_t or suit = 0
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 2] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 2] [ set a_r na_r
+    if a_s = t or core <= core_t or suit = 0
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 3] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 3] [ set a_r na_r
+    if a_s = t or core <= core_t or suit = 0
+    [set pcolor [pcolor] of one-of neighbors4]]
+  tick
+  if ticks = 100 [stop]
+end
+
+to stream_i
+   let t 1
+  ask patches with [mg = 1] [ set a_s 0 set na_s 0]
+  ask patches with [mg = 1]
+  [ set a_s na_s
+    if a_s = t or stream <= stream_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 2] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 2] [ set a_r na_r
+    if a_s = t or stream <= stream_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 3] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 3] [ set a_r na_r
+    if a_s = t or stream <= stream
+    [set pcolor [pcolor] of one-of neighbors4]]
+  tick
+  if ticks = 100 [stop]
+end
+
+to built_i
+   let t 1
+  ask patches with [mg = 1] [ set a_s 0 set na_s 0]
+  ask patches with [mg = 1]
+  [ set a_s na_s
+    if a_s = t or built <= built_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 2] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 2] [ set a_r na_r
+    if a_s = t or built <= built_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 3] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 3] [ set a_r na_r
+    if a_s = t or built <= built_t
+    [set pcolor [pcolor] of one-of neighbors4]]
+  tick
+  if ticks = 100 [stop]
+end
+
+to all_i
+   let t 2.8
+  ask patches with [mg = 1] [ set a_s 0 set na_s 0]
+  ask patches with [mg = 1]
+  [ set a_s na_s
+    if a_s = t or all <= all_t or suit = 1
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 2] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 2] [ set a_r na_r
+    if a_s = t or all <= all_t or suit = 1
+    [set pcolor [pcolor] of one-of neighbors4]]
+  ask patches with [mg = 3] [ set a_r 0 set na_s 0]
+  ask patches with [mg = 3] [ set a_r na_r
+    if a_s = t or all <= all_t or suit = 1
+    [set pcolor [pcolor] of one-of neighbors4]]
+  tick
+  if ticks = 100 [stop]
+end
+;-----TRENDS-----
+;Greater than treshold, decrease >
+
+
+to export_data
+  let patches_out nobody
+  ask one-of patches [
+    set patches_out gis:patch-dataset pcolor
+  ]
+  gis:store-dataset patches_out "C:\\Users\\Michael\\Documents\\data\\lu\\export2.asc"
+end
+
+Note:
+For any questions, please email me at: 
+michaelandrew.manalili@gmail.com
+mgmanalili@upd.edu.ph
