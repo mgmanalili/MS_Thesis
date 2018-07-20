@@ -1,1 +1,310 @@
+library(markovchain)
+library(magrittr)
+library(Gmisc)
 
+file = "C:/Users/Michael/Documents/R/tpm.txt"
+tmatrix<- as.matrix(read.table(file, header=TRUE, sep = "\t",
+                               row.names = 1,
+                               as.is=TRUE))
+#IMPORTANT: Returns the type of data
+str(b)
+
+tmatrix
+b <- tmatrix^3
+b
+transitionPlot(tmatrix)
+
+transitionPlot(tmatrix, 
+               fill_start_box = c("#0761f2","#d8863a","#e3e56b","#bf3422","#60a85c","#094f05"),
+               type_of_arrow = "simple", #gradient
+               box_label = c("Initial State", "Transition State"))
+transition$render()
+addTransitions(mtrx, label, txt, fill_clr, txt_clr)
+
+transitions$title <- "Charnley class in relation to THR"
+transitions$arrow_type <- "simple"
+table(data$Charnley_class_1yr, data$Charnley_class_2yr, data$Sex) %>%
+  transitions$addTransitions(label="2 years after")
+library(grid)
+transitions$max_lwd <- unit(.05, "npc")
+transitions$render()
+
+tdata = "C:/Users/Michael/Documents/tdata.xls"
+tdata.head
+#https://cran.r-project.org/web/packages/Gmisc/vignettes/Transition-class.html
+
+
+
+data<- data.frame(source = c("A", "A", "A", "B", "B", "C", "C"),
+                     target = c("A", "B", "C", "B", "C", "C", "C"))
+data2 <- data.frame(source = c("D", "D", "E", "E", "E", "E", "F"),
+                    target = c("D", "E", "D", "E", "F", "F", "F"))
+
+transitions.1 <- getRefClass("Transition")$new(table(data.1$source, data.1$target), label = c("Before", "After"))
+transitions.2 <- getRefClass("Transition")$new(table(data.2$source, data.2$target), label = c("Before", "After"))
+
+# wish to render transition 1 and transition 2 next to each other
+transitions.1$render()
+transitions.2$render()
+
+
+transitions <- table(data$Charnley_class, data2$Charnley_class_1yr, data) %>%
+  getRefClass("Transition")$new(label=c("Before surgery", "1 year after"))
+transitions$title <- "Charnley class in relation to THR"
+transitions$arrow_type <- "simple"
+table(data$Charnley_class_1yr, data$Charnley_class_2yr, data$Sex) %>%
+  transitions$addTransitions(label="2 years after")
+library(grid)
+transitions$max_lwd <- unit(.05, "npc")
+transitions$render()
+
+#no_boxes = 5
+#tm <- matrix(tmatrix, nrow=no_boxes, ncol=no_boxes)
+
+
+transitionPlot(tmatrix, 
+               #fill_start_box = c("#65f442", "#428ab7"),
+               type_of_arrow = "gradient",
+               box_label = c("Initial State", "Transition State"),
+               min_lwd = unit(0.2, "mm"), max_lwd = unit(5, "mm"))
+
+##----EXAMPLE----##
+URL <- paste0(
+  "https://cdn.rawgit.com/christophergandrud/networkD3/",
+  "master/JSONdata/energy.json")
+Energy <- jsonlite::fromJSON(URL)
+# Plot
+sankeyNetwork(Links = Energy$links, Nodes = Energy$nodes, Source = "source",
+              Target = "target", Value = "value", NodeID = "name",
+              units = "TWh", fontSize = 12, nodeWidth = 30)
+
+
+plot(gvisSankey(orders.plot, from='from', to='to', weight='n',
+                options=list(height=900, width=1800, sankey="{link:{color:{fill:'lightblue'}}}")))
+##----EXAMPLE----##
+##---REFERENCES---##
+#https://cran.r-project.org/web/packages/Gmisc/vignettes/transitionPlot.html
+#https://christophergandrud.github.io/networkD3/
+#https://plot.ly/r/sankey-diagram/
+#https://analyzecore.com/2014/10/31/sequence-carts-analysis-sankey/
+#https://plot.ly/~alishobeiri/1591/plotly-sankey-diagrams/#/
+
+
+#Markov Chain
+
+#install.packages("pracma")
+library("markovchain")
+library(diagram)
+library(pracma)
+
+data = "C:/Users/Michael/Documents/R/tpm.txt"
+
+tmatrix<- as.matrix(read.table(data, header=TRUE, sep = "\t",
+                              row.names = 1,
+                              as.is=TRUE))
+tmatrix
+states = c("W","M","C","BU","S", "F")
+s = c("a","b","c","d","e","f")
+mc <-new("markovchain",
+           transitionMatrix = tmatrix,
+           byrow=T,
+           states = s,
+           name = "abc")
+plot(mc)
+mc
+steadyStates(mc)
+tmatrix
+absorbingStates(mc)
+transientStates(mc)
+
+P=matrix(0,nrow=6,ncol=6)
+P[1,]=c(0.5483, 0.1408, 0.2311, 0.0000, 0.0000, 0.0798)
+P[2,]=c(0.0008, 0.7373, 0.1691, 0.0000, 0.0036, 0.0891)
+P[3,]=c(0.0005, 0.0124, 0.4779, 0.0117, 0.4637, 0.0337)
+P[4,]=c(0.0000, 0.0000, 0.0000, 1.0000, 0.0000, 0.0000)
+P[5,]=c(0.0000, 0.0016, 0.1548, 0.0080, 0.7439, 0.0917)
+P[6,]=c(0.0000, 0.0475, 0.0682, 0.0005, 0.4115, 0.4723)
+initialstate <- t(as.matrix(P))
+initialstate
+a <- initialstate^4
+mc
+mc^50
+plot(mc^1)
+a
+
+finalstate <- initialstate * (mc ^ 4)
+finalstate
+plot(fin)
+
+#RandomForest Regression
+library("caret")
+library("randomForest")
+library("pls")
+library("party")
+library("spdep")
+library("corrplot")
+library("ggplot2")
+library("parallel")
+library("dplyr")
+library("RColorBrewer")
+library("rfUtilities")
+library("VSURF")
+library("rpart")
+library("rpart.plot")
+library("randomForestExplainer")
+
+set.seed(123)
+rm(list=ls())
+# data for mangrove devrease
+setwd("D:/Data/01_Thesis/08_Regression_R")
+filename = "lll.txt"
+data <-read.delim(filename, header = TRUE, sep = "\t")
+form = Mg_Area ~ .
+names(data)
+
+#Correlation Plot
+corrplot(cor(data),order = "hclust")
+
+#Control
+set.seed(123)
+control <- trainControl(method='repeatedcv',number=10,repeats=10)
+mtry <- sqrt(ncol(data))
+
+#RandomForest
+RF <- train(form,data=data, 
+            method = "rf",trControl=control,
+            importance = TRUE, ntree = 1000)
+plot(varImp(RF, useModel = TRUE), top=15)
+RF$finalModel
+RF$results
+
+#Random Forest with cross validation
+RF2 <- randomForest(form,data=data, method = "rf",trControl=control,
+                  importance = TRUE, ntree = 1000)
+
+RF2
+
+#Explain RF plots
+plot_importance_ggpairs(RF2)
+plot_importance_ggpairs(importance_frame)
+plot_multi_way_importance(RF2, x_measure = "mse_increase", 
+                          y_measure = "node_purity_increase", 
+                          size_measure = "p_value", no_of_labels = 5)
+plot_min_depth_interactions(RF2)
+
+#https://cran.rstudio.com/web/packages/randomForestExplainer/vignettes/randomForestExplainer.html
+
+#CrossValidation
+CV <- rf.crossValidation(RF2, data, p = 0.1, n = 99, seed = NULL,
+                   normalize = TRUE)
+CV
+plot(RF2, type = "cv", stat = "producers.accuracy")
+plot(RF2, imp = "sel")
+rf.class.sensitivity(RF2, data, d = "1", p = 0.05, nperm = 999,
+                     plot = TRUE, seed = NULL)
+
+## Variable Selection Using Random Forest - VSURF
+vsurf <- VSURF(form,data=data, mtry = 100, parallel = TRUE, 
+               ncores = 1, clusterType = "FORK")
+
+summary(vsurf)
+vsurf$varselect.interp
+names(data)
+plot(vsurf)
+
+RF2 <- rpart(form,data=data)
+rpart.plot(RF2)
+plot(RF2$finalModel)
+text(RF2$finalModel)
+
+#Differ
+#Land Use Change Comparison
+rm(list=ls())
+gc(TRUE)
+library(diffeR)
+library(composite)
+library(raster)
+library(ggplot2)
+library(vcd)
+#ref <- raster("D:/Data/01_Thesis/01_Data/LULC/final/lulc2017.tif")
+ref <- raster("D:\\Data\\01_Thesis\\01_Data\\LULC\\ConfMatrix\\real2017.tif")
+#comp <- raster("D:/Data/01_Thesis/01_Data/LULC/final/lulc1993.tif")
+comp <- raster("D:\\Data\\01_Thesis\\01_Data\\LULC\\ConfMatrix\\simulatedR.tif")
+
+composite(comp, ref, factor=2)
+a<-crosstabm(comp, ref, percent=FALSE)
+a
+memb.ref <- memberships(comp, fact=2)
+plot(memb.ref)
+plot(comp)
+plot(ref)
+barplot(comp)
+
+#Plots results
+ctmatCompRef <- crosstabm(comp, ref)
+diffTablej(ctmatCompRef)
+overallAllocD(ctmatCompRef) #calculates overall allocation disagreement
+overallDiff(ctmatCompRef) #calculates overall difference between from a square contingency table
+overallDiffCatj(ctmatCompRef) #calculates overall difference at the category level from a square contingency table
+overallExchangeD(ctmatCompRef) #calculates overall exchange difference from a square contingency table
+overallQtyD(ctmatCompRef) #calculates overall quantity disagreement
+overallShiftD(ctmatCompRef) #calculates overall shift difference from a square contingency table
+quantityDj(ctmatCompRef) #calculates quantity difference at the category level from a square contingency table
+differenceMR(comp, ref, eval="original") #calculates difference metrics between a reference map and a comparison map
+overallComponentsPlot(comp, ref)#Plots the shift, exchange and quantity
+#differenceMR(comp, ref, eval="multiple", fact=2)
+#write.csv(exchangeDij(ctmatCompRef), "C:/Users/Michael/Desktop/sample.txt")
+assoc(a, shade=T, legend=T)
+
+veg_obs1 <- raster(system.file("external/veg_obs1.rst", package="diffeR"))
+veg_pre1 <- raster(system.file("external/veg_pre1.rst", package="diffeR"))
+veg_mask1 <- raster(system.file("external/veg_mask1.rst", package="diffeR"))
+MADscatterplot(comp, ref)
+MAD(comp,ref, eval="multiple")
+
+#SDM / FragStat
+#SDM TOOLS FOR Fragmentation analysis
+rm(list=ls())
+library("raster")
+library("rgdal")
+library("sp")
+library("dplyr")
+library("igraph")
+library("SDMTools")
+library("ggplot2")
+
+y1<- raster("D:/Data/01_Thesis/01_Data/LULC/GEE/0005con.tif")
+patch = PatchStat(y1)
+patch
+
+
+plot(y1)
+summary(y1)
+structure(y1)
+ppstat<- ClassStat(y1, cellsize = 30)
+dplyr::tbl_df(ppstat)
+hist(pps)
+
+tmat = { matrix(c( 0,0,0,1,0,0,1,1,0,1,
+                   0,0,1,0,1,0,0,0,0,0,
+                   0,1,NA,1,0,1,0,0,0,1,
+                   1,0,1,1,1,0,1,0,0,1,
+                   0,1,0,1,0,1,0,0,0,1,
+                   0,0,1,0,1,0,0,1,1,0,
+                   1,0,0,1,0,0,1,0,0,1,
+                   0,1,0,0,0,1,0,0,0,1,
+                   0,0,1,1,1,0,0,0,0,1,
+                   1,1,1,0,0,0,0,0,0,1),nr=10,byrow=TRUE) }
+
+ggplot(tmtat)
+
+#do the connected component labelling
+ccl.mat = ConnCompLabel(tmat)
+ccl.mat
+image(t(ccl.mat[10:1,]),col=c('grey',rainbow(length(unique(ccl.mat))-1)))
+
+#calculate the patch statistics
+plot(pps.data$core.area)
+
+#ftp://ftp.gr.xemacs.org/mirrors/CRAN/web/packages/dismo/vignettes/sdm.pdf
+#http://blogs.oregonstate.edu/geog566spatialstatistics/files/2017/05/ATaluccigeog566_exercise3_r_19May2017.pdf
